@@ -1,0 +1,143 @@
+
+Voici le code HTML et JavaScript mis à jour pour que la reconnaissance vocale démarre uniquement lorsque tu dis "récapituler" ou "recapitulons".
+
+Code HTML et JavaScript :
+html
+Copy code
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tour de Magie</title>
+</head>
+<body>
+    <h1>Préparation du Tour de Magie</h1>
+    <p>Appuyez sur le bouton pour activer la reconnaissance du mot-clé.</p>
+    <button id="startButton">Activer la reconnaissance vocale</button>
+    <div id="status"></div>
+    <script>
+        !function(){
+            var e, n, activationKeyword = ["récapituler", "recapitulons"],
+            t = {
+                "mélanger le jeu": "JQK",
+                "mélanger les cartes": "567",
+                "mélanger le tas": "A",
+                "mélanger le paquet": "234",
+                "mélanger le deck": "8910"
+            }, r = {
+                "une": 1,
+                "doigt": 2,
+                "trié": 3
+            }, i = {
+                "adore": "Coeur",
+                "écran": "Carreau",
+                "prédiction": "Pique",
+                "truc": "Trèfle"
+            }, valeurs = {
+                "J": "Valet",
+                "Q": "Dame",
+                "K": "Roi",
+                "A": "As",
+                "5": "Cinq",
+                "6": "Six",
+                "7": "Sept",
+                "2": "Deux",
+                "3": "Trois",
+                "4": "Quatre",
+                "8": "Huit",
+                "9": "Neuf",
+                "10": "Dix"
+            }, couleurs = {
+                "Coeur": "de Coeur",
+                "Carreau": "de Carreau",
+                "Pique": "de Pique",
+                "Trèfle": "de Trèfle"
+            }, a = "", s = "", o = "", listeningForCard = false,
+            l = new (window.SpeechRecognition || window.webkitSpeechRecognition);
+
+            function c(e) {
+                var t = (new Date - n) / 1e3;
+                console.log(e + ". Temps écoulé: " + t + " secondes.");
+            }
+
+            l.lang = "fr-FR";
+            l.continuous = !0;
+            l.onstart = function() {
+                c("Reconnaissance vocale démarrée à: " + (n = new Date).toLocaleTimeString());
+                document.getElementById("status").innerText = "En attente du mot-clé...";
+            };
+            l.onresult = function(n) {
+                var l = n.results.length - 1,
+                    C = n.results[l][0].transcript.toLowerCase();
+                
+                c("Texte entendu: " + C);
+
+                if (listeningForCard) {
+                    // Écoute des mots pour déterminer la carte
+                    for (var u in t)
+                        if (C.includes(u)) {
+                            a = t[u];
+                            c("Groupe détecté: " + u + " => " + a);
+                            break;
+                        }
+                    for (var d in r)
+                        if (C.includes(d)) {
+                            s = r[d];
+                            c("Position détectée: " + d + " => " + s);
+                            break;
+                        }
+                    for (var A in i)
+                        if (C.includes(A)) {
+                            o = i[A];
+                            c("Couleur détectée: " + A + " => " + o);
+                            break;
+                        }
+
+                    if (a && s && o) {
+                        var valeur = "";
+                        if (a === "JQK") valeur = ["Valet", "Dame", "Roi"][s - 1];
+                        if (a === "567") valeur = ["Cinq", "Six", "Sept"][s - 1];
+                        if (a === "234") valeur = ["Deux", "Trois", "Quatre"][s - 1];
+                        if (a === "A") valeur = "As";
+                        if (a === "8910") valeur = ["Huit", "Neuf", "Dix"][s - 1];
+
+                        var carte = valeur + " " + couleurs[o];
+                        c("Carte identifiée: " + carte);
+                        e = document.createElement("iframe");
+                        e.src = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(carte);
+                        e.style.position = "fixed";
+                        e.style.top = "50%";
+                        e.style.left = "50%";
+                        e.style.transform = "translate(-50%,-50%)";
+                        e.style.width = "80%";
+                        e.style.height = "80%";
+                        e.style.zIndex = "1000";
+                        document.body.appendChild(e);
+                        c("Recherche Google Images lancée pour: " + carte);
+                        listeningForCard = false;
+                    } else {
+                        c("Informations incomplètes pour identifier la carte.");
+                    }
+                } else {
+                    // Activation de l'écoute de la carte si le mot-clé est détecté
+                    activationKeyword.forEach(keyword => {
+                        if (C.includes(keyword)) {
+                            listeningForCard = true;
+                            c("Mot-clé détecté: " + keyword + ". Activation de l'écoute pour la carte...");
+                            document.getElementById("status").innerText = "Mot-clé détecté. Écoute pour la carte...";
+                        }
+                    });
+                }
+            };
+            l.onend = function() {
+                c("Reconnaissance terminée, redémarrage...");
+                l.start();
+            };
+            document.getElementById("startButton").addEventListener("click", function() {
+                l.start();
+            });
+        }();
+    </script>
+</body>
+</html>
