@@ -3,126 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tour de Magie</title>
+    <title>Écoute du Micro en Temps Réel</title>
 </head>
 <body>
-    <h1>Préparation du Tour de Magie</h1>
-    <p>Appuyez sur le bouton pour activer la reconnaissance du mot-clé.</p>
-    <button id="startButton">Activer la reconnaissance vocale</button>
-    <div id="status"></div>
+    <h1>Écoute du Micro en Temps Réel</h1>
+    <p id="result-text">Le texte capturé sera affiché ici...</p>
+    <p id="current-group">Groupe sélectionné : </p>
+    <p id="current-position">Position sélectionnée : </p>
+    <p id="current-color">Couleur sélectionnée : </p>
+    <p id="selected-card">Carte sélectionnée : </p>
+
     <script>
-        !function(){
-            var n, activationKeyword = ["récapituler", "recapitulons"],
-            t = {
-                "mélanger le jeu": "JQK",
-                "mélanger les cartes": "567",
-                "mélanger le tas": "A",
-                "mélanger le paquet": "234",
-                "mélanger le deck": "8910"
-            }, r = {
-                "une": 1,
-                "doigt": 2,
-                "trié": 3
-            }, i = {
-                "adore": "Coeur",
-                "écran": "Carreau",
-                "prédiction": "Pique",
-                "truc": "Trèfle"
-            }, valeurs = {
-                "J": "Valet",
-                "Q": "Dame",
-                "K": "Roi",
-                "A": "As",
-                "5": "Cinq",
-                "6": "Six",
-                "7": "Sept",
-                "2": "Deux",
-                "3": "Trois",
-                "4": "Quatre",
-                "8": "Huit",
-                "9": "Neuf",
-                "10": "Dix"
-            }, couleurs = {
-                "Coeur": "de Coeur",
-                "Carreau": "de Carreau",
-                "Pique": "de Pique",
-                "Trèfle": "de Trèfle"
-            }, a = "", s = "", o = "", listeningForCard = false,
-            l = new (window.SpeechRecognition || window.webkitSpeechRecognition);
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+        let isListening = false;
+        let silenceTimer;
+        const maxSilenceDuration = 59000;
+        
+        // Mots-clés pour le filtre
+        const groupKeywords = {
+            "J,Q,K": ["jeu", "cartes"],
+            "5,6,7": ["cartes"],
+            "As": ["tas"],
+            "2,3,4": ["paquet"],
+            "8,9,10": ["deck"]
+        };
+        
+        const positionKeywords = {
+            "1": ["une"],
+            "2": ["doigt"],
+            "3": ["trié"]
+        };
+        
+        const colorKeywords = {
+            "Coeur": ["cœur"], // Remplacement de "adore" par "coeur"
+            "Carreau": ["écran"],
+            "Pique": ["prédiction"],
+            "Trèfle": ["truc"]
+        };
 
-            function c(e) {
-                var t = (new Date - n) / 1e3;
-                console.log(e + ". Temps écoulé: " + t + " secondes.");
+        const numberToWord = {
+            "1": "As",
+            "2": "Deux",
+            "3": "Trois",
+            "4": "Quatre",
+            "5": "Cinq",
+            "6": "Six",
+            "7": "Sept",
+            "8": "Huit",
+            "9": "Neuf",
+            "10": "Dix",
+            "J": "Valet",
+            "Q": "Dame",
+            "K": "Roi"
+        };
+
+        let selectedGroup = "";
+        let selectedPosition = "";
+        let selectedColor = "";
+
+        function startRecognition() {
+            if (!isListening) {
+                recognition.start();
+                isListening = true;
+                console.log('Reconnaissance vocale commencée.');
             }
+        }
 
-            l.lang = "fr-FR";
-            l.continuous = !0;
-            l.onstart = function() {
-                c("Reconnaissance vocale démarrée à: " + (n = new Date).toLocaleTimeString());
-                document.getElementById("status").innerText = "En attente du mot-clé...";
-            };
-            l.onresult = function(n) {
-                var l = n.results.length - 1,
-                    C = n.results[l][0].transcript.toLowerCase();
-                
-                c("Texte entendu: " + C);
+        function stopRecognition() {
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                console.log('Reconnaissance vocale arrêtée.');
+            }
+        }
 
-                if (listeningForCard) {
-                    // Écoute des mots pour déterminer la carte
-                    for (var u in t)
-                        if (C.includes(u)) {
-                            a = t[u];
-                            c("Groupe détecté: " + u + " => " + a);
-                            break;
-                        }
-                    for (var d in r)
-                        if (C.includes(d)) {
-                            s = r[d];
-                            c("Position détectée: " + d + " => " + s);
-                            break;
-                        }
-                    for (var A in i)
-                        if (C.includes(A)) {
-                            o = i[A];
-                            c("Couleur détectée: " + A + " => " + o);
-                            break;
-                        }
-
-                    if (a && s && o) {
-                        var valeur = "";
-                        if (a === "JQK") valeur = ["Valet", "Dame", "Roi"][s - 1];
-                        if (a === "567") valeur = ["Cinq", "Six", "Sept"][s - 1];
-                        if (a === "234") valeur = ["Deux", "Trois", "Quatre"][s - 1];
-                        if (a === "A") valeur = "As";
-                        if (a === "8910") valeur = ["Huit", "Neuf", "Dix"][s - 1];
-
-                        var carte = valeur + " " + couleurs[o];
-                        c("Carte identifiée: " + carte);
-                        var searchUrl = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(carte);
-                        c("Redirection vers: " + searchUrl);
-                        window.location.href = searchUrl;  // Redirection vers Google Images
-                    } else {
-                        c("Informations incomplètes pour identifier la carte.");
-                    }
-                } else {
-                    // Activation de l'écoute de la carte si le mot-clé est détecté
-                    activationKeyword.forEach(keyword => {
-                        if (C.includes(keyword)) {
-                            listeningForCard = true;
-                            c("Mot-clé détecté: " + keyword + ". Activation de l'écoute pour la carte...");
-                            document.getElementById("status").innerText = "Mot-clé détecté. Écoute pour la carte...";
+        function analyzeTranscript(transcript) {
+            // Détection du groupe
+            if (!selectedGroup) {
+                for (let group in groupKeywords) {
+                    groupKeywords[group].forEach(keyword => {
+                        if (transcript.includes(keyword)) {
+                            selectedGroup = group;
+                            document.getElementById('current-group').textContent = `Groupe sélectionné : ${group}`;
                         }
                     });
                 }
+            }
+
+            // Détection de la position
+            if (selectedGroup && !selectedPosition) {
+                for (let position in positionKeywords) {
+                    positionKeywords[position].forEach(keyword => {
+                        if (transcript.includes(keyword)) {
+                            selectedPosition = position;
+                            document.getElementById('current-position').textContent = `Position sélectionnée : ${position}`;
+                        }
+                    });
+                }
+            }
+
+            // Détection de la couleur
+            if (selectedGroup && selectedPosition && !selectedColor) {
+                for (let color in colorKeywords) {
+                    colorKeywords[color].forEach(keyword => {
+                        if (transcript.includes(keyword)) {
+                            selectedColor = color;
+                            document.getElementById('current-color').textContent = `Couleur sélectionnée : ${color}`;
+                        }
+                    });
+                }
+            }
+
+            // Affichage de la carte
+            if (selectedGroup && selectedPosition && selectedColor) {
+                let cardValue;
+                if (selectedGroup === "As") {
+                    cardValue = "As"; // Toujours "As" peu importe la position
+                } else {
+                    const groupArray = selectedGroup.split(',');
+                    cardValue = numberToWord[groupArray[selectedPosition - 1]];
+                }
+                const card = `${cardValue} de ${selectedColor}`;
+                document.getElementById('selected-card').textContent = `Carte sélectionnée : ${card}`;
+
+                // Rediriger vers Google Images avec la carte sélectionnée
+                const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(card)}&hl=fr&tbm=isch`;
+                window.location.href = googleSearchUrl;
+            }
+        }
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'fr-FR';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            const resultText = document.getElementById('result-text');
+
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                resultText.textContent = transcript;
+
+                analyzeTranscript(transcript.toLowerCase());
             };
-            l.onend = function() {
-                c("Reconnaissance terminée, redémarrage...");
-                l.start();
+
+            recognition.onerror = (event) => {
+                console.error('Erreur de reconnaissance vocale :', event.error);
+                stopRecognition();
+                startRecognition();
             };
-            document.getElementById("startButton").addEventListener("click", function() {
-                l.start();
+
+            recognition.onend = () => {
+                console.log('Reconnaissance vocale terminée.');
+                isListening = false;
+                startRecognition();
+            };
+
+            document.addEventListener('DOMContentLoaded', () => {
+                startRecognition();
             });
-        }();
+
+            window.addEventListener('focus', () => {
+                if (!isListening) {
+                    startRecognition();
+                }
+            });
+
+        } else {
+            alert("Votre navigateur ne supporte pas la reconnaissance vocale.");
+        }
     </script>
 </body>
 </html>
