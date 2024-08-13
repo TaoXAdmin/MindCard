@@ -1,9 +1,3 @@
-
-Voici le code HTML et JavaScript mis à jour pour que la reconnaissance vocale démarre uniquement lorsque tu dis "récapituler" ou "recapitulons".
-
-Code HTML et JavaScript :
-html
-Copy code
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -18,7 +12,7 @@ Copy code
     <div id="status"></div>
     <script>
         !function(){
-            var e, n, activationKeyword = ["récapituler", "recapitulons"],
+            var n, activationKeyword = ["récapituler", "recapitulons"],
             t = {
                 "mélanger le jeu": "JQK",
                 "mélanger les cartes": "567",
@@ -104,18 +98,9 @@ Copy code
 
                         var carte = valeur + " " + couleurs[o];
                         c("Carte identifiée: " + carte);
-                        e = document.createElement("iframe");
-                        e.src = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(carte);
-                        e.style.position = "fixed";
-                        e.style.top = "50%";
-                        e.style.left = "50%";
-                        e.style.transform = "translate(-50%,-50%)";
-                        e.style.width = "80%";
-                        e.style.height = "80%";
-                        e.style.zIndex = "1000";
-                        document.body.appendChild(e);
-                        c("Recherche Google Images lancée pour: " + carte);
-                        listeningForCard = false;
+                        var searchUrl = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(carte);
+                        c("Redirection vers: " + searchUrl);
+                        window.location.href = searchUrl;  // Redirection vers Google Images
                     } else {
                         c("Informations incomplètes pour identifier la carte.");
                     }
