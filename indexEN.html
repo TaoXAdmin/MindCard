@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindCard</title>
+    	<style>
+		body{
+			background-color: black;
+			color: white;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+		}
+		h1{
+			text-align:center;
+		}
+		p{
+			font-size: 1.25em;
+		}
+	</style>
+</head>
+<body><br><br>
+    <h1>Real-Time Microphone Listening</h1><br><br><br>
+    <p id="result-text">Captured text will be displayed here...</p><br>
+    <p id="current-group">Group selected : </p><br>
+    <p id="current-position">Position selected : </p><br>
+    <p id="current-color">Color selected : </p><br>
+    <p id="selected-card">Card selected : </p><br>
+
+    <script>
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+        let isListening = false;
+        let silenceTimer;
+        const maxSilenceDuration = 59000;
+        
+        // Mots-clés pour le filtre
+        const groupKeywords = {
+            "J,Q,K": ["kill"],
+            "5,6,7": ["shuffle"],
+            "As": ["displace"],
+            "2,3,4": ["tweak"],
+            "8,9,10": ["eliminate"]
+        };
+        
+        const positionKeywords = {
+            "1": ["one"],
+            "2": ["twist"],
+            "3": ["this"]
+        };
+        
+        const colorKeywords = {
+            "Coeur": ["had"], 
+            "Carreau": ["did"],
+            "Pique": ["saw"],
+            "Trèfle": ["can"]
+        };
+
+        const numberToWord = {
+            "1": "Ace",
+            "2": "Two",
+            "3": "Three",
+            "4": "Four",
+            "5": "Five",
+            "6": "Six",
+            "7": "Seven",
+            "8": "Eight",
+            "9": "Nine",
+            "10": "Ten",
+            "J": "Jack",
+            "Q": "Queen",
+            "K": "King"
+        };
+
+        let selectedGroup = "";
+        let selectedPosition = "";
+        let selectedColor = "";
+
+        function startRecognition() {
+            if (!isListening) {
+                recognition.start();
+                isListening = true;
+                console.log('Reconnaissance vocale commencée.');
+            }
+        }
+
+        function stopRecognition() {
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                console.log('Reconnaissance vocale arrêtée.');
+            }
+        }
+
+        function analyzeTranscript(transcript) {
+            // Détection du groupe
+            if (!selectedGroup) {
+                for (let group in groupKeywords) {
+                    groupKeywords[group].forEach(keyword => {
+                        if (transcript.includes(keyword)) {
+                            selectedGroup = group;
+                            document.getElementById('current-group').textContent = `Group selected : ${group}`;
+                        }
+                    });
+                }
+            }
+
+            // Détection de la position
+            if (selectedGroup && !selectedPosition) {
+                for (let position in positionKeywords) {
+                    positionKeywords[position].forEach(keyword => {
+                        if (transcript.includes(keyword)) {
+                            selectedPosition = position;
+                            document.getElementById('current-position').textContent = `Position selected : ${position}`;
+                        }
+                    });
+                }
+            }
+
+            // Détection de la couleur
+            if (selectedGroup && selectedPosition && !selectedColor) {
+                for (let color in colorKeywords) {
+                    colorKeywords[color].forEach(keyword => {
+                        if (transcript.includes(keyword)) {
+                            selectedColor = color;
+                            document.getElementById('current-color').textContent = `Color selected : ${color}`;
+                        }
+                    });
+                }
+            }
+
+            // Affichage de la carte
+            if (selectedGroup && selectedPosition && selectedColor) {
+                let cardValue;
+                if (selectedGroup === "Ace") {
+                    cardValue = "Ace"; 
+                } else {
+                    const groupArray = selectedGroup.split(',');
+                    cardValue = numberToWord[groupArray[selectedPosition - 1]];
+                }
+                const card = `${cardValue} of ${selectedColor}`;
+                document.getElementById('selected-card').textContent = `Card selected : ${card}`;
+
+                // Rediriger vers Google Images avec la carte sélectionnée
+                const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(card)}&hl=fr&tbm=isch`;
+                window.location.href = googleSearchUrl;
+            }
+        }
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            const resultText = document.getElementById('result-text');
+
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                resultText.textContent = transcript;
+
+                analyzeTranscript(transcript.toLowerCase());
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Erreur de reconnaissance vocale :', event.error);
+                stopRecognition();
+                startRecognition();
+            };
+
+            recognition.onend = () => {
+                console.log('Reconnaissance vocale terminée.');
+                isListening = false;
+                startRecognition();
+            };
+
+            document.addEventListener('DOMContentLoaded', () => {
+                startRecognition();
+            });
+
+            window.addEventListener('focus', () => {
+                if (!isListening) {
+                    startRecognition();
+                }
+            });
+
+        } else {
+            alert("Votre navigateur ne supporte pas la reconnaissance vocale.");
+        }
+    </script>
+</body>
+</html>
