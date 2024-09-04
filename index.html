@@ -49,7 +49,7 @@
         };
         
         const colorKeywords = {
-            "Coeur": ["cœur"], // Remplacement de "adore" par "coeur"
+            "Coeur": ["cœur"], 
             "Carreau": ["écran"],
             "Pique": ["prédiction"],
             "Trèfle": ["truc"]
@@ -132,7 +132,7 @@
             if (selectedGroup && selectedPosition && selectedColor) {
                 let cardValue;
                 if (selectedGroup === "As") {
-                    cardValue = "As"; // Toujours "As" peu importe la position
+                    cardValue = "As"; 
                 } else {
                     const groupArray = selectedGroup.split(',');
                     cardValue = numberToWord[groupArray[selectedPosition - 1]];
